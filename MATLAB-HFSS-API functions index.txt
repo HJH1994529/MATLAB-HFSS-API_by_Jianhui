@@ -1,0 +1,634 @@
+基本函数的调用规则：
+1. hfssExecuteScript(hfssExePath, ScriptFile, iconOpt, runAndExit)
+hfssExePath：完整的HFSS路径
+ScriptFile：需要运行的VBS脚本完整路径
+iconOpt：默认为false, HFSS将以普通模式运行
+runAndExit：默认为false，HFSS运行完后不自动关闭；若设置为True，则HFSS运行完后将自动关闭界面
+实例：
+hfssExePath='D:\software\HFSS15\AnsysEM18.2\Win64\ansysedt.exe';
+ScriptFile='F:\vbsScript\Helloworld.vbs';
+hfssExecuteScript(hfssExePath, ScriptFile, false, false);
+
+2. hfssOpenProject(fid, hfssProjectFile,DesignName)
+hfssProjectFile：需要打开的HFSS工程文件名的路径
+DesignName： HFSS设计文件名
+实例：
+objPrjFile='E:\FSS.aedt';
+objDesignName='HFSSDesign1';
+hfssOpenProject(fid, objPrjFile,objDesignName);
+
+3. hfssSaveProject(fid, objPrjFile, overwrite)
+objPrjFile：需要保存的HFSS工程文件路径名
+overwrite：是否覆盖同路径同名的工程文件，只要不为空就执行覆盖操作，默认覆盖原文件
+实例：
+objPrjFile='E:\FSS.aedt';
+hfssSaveProject(fid, objPrjFile,1);%overwrite不为空,执行覆盖操作,覆盖原文件
+hfssSaveProject(fid, objPrjFile);%overwrite为空,不执行覆盖操作，不推荐使用！
+
+4. hfssSave(fid)
+实例：
+hfssSave(fid);
+
+5. hfssCloseProject(fid,ProjectName)
+ProjectName：需要关闭的HFSS工程文件的名字
+实例：
+ProjectName='Project1';
+hfssCloseProject(fid, ProjectName);
+
+6. hfssNewProject(fid)
+实例：
+fid = fopen(tmpScriptFile, 'wt');
+hfssNewProject(fid);
+
+7. hfssInsertDesign(fid, DesignName, DesignType)
+DesignName： HFSS设计文件名
+DesignType：DrivenModal， DrivenTerminal ，Eigenmode等
+DrivenModal用于计算无源结构的S参数，例如波导、微带和由源驱动的传输线等（详见HFSS Help文档）
+实例：
+DesignName='HFSSDesign1';
+DesignType='DrivenModal';
+hfssInsertDesign(fid, DesignName, DesignType);%设置DesignType类型
+hfssInsertDesign(fid, DesignName);%缺省DesignType时，默认为模式驱动
+
+8. hfssVariableInsert(fid,DesignName,VariableName, Value, Unit, Flag)
+DesignName： HFSS设计文件名；VariableName ：变量名
+Value ：变量值；Unit ：单位；
+Flag ：值为1时Value只支持数字，值为2时Value支持字符表达式
+实例：
+Box_H=1;Box_W=2;Box_L=3;
+hfssVariableInsert(fid,Design_name,'Box_H', Box_H, 'mm',1);
+hfssVariableInsert(fid,Design_name,'Box_W', Box_W, 'mm',1);
+hfssVariableInsert(fid,Design_name,'Box_L', 'Box_H+Box_W', 'mm',2);
+
+9. hfssVariableChange(fid,ProjectName,DesignName,VariableName,Value,Unit,Flag)
+ProjectName：HFSS工程文件名；
+DesignName：HFSS设计文件名；VariableName ：待修改变量名
+Value ：修改后变量值；Units ：单位；
+Flag ：值为1时Value只支持数字，值为2时Value支持表达式
+实例：
+hfssVariableChange(fid, 'project1','design1','box_W', 2, 'mm', 1);
+hfssVariableChange(fid, 'project1','design1','Sub_W', 'Sub_L+Sub_H', 'mm', 2);
+
+建模函数：
+1. hfssBox(fid, BoxName, Start, Size, Unit, Color, Material, Transparency, Flag)
+BoxName：Box的名字；Start：初始点坐标；Size：沿着x,y,z轴的尺寸；Unit：单位
+Color：Box的颜色(RGB)；Material：材料名字（不要随便自己整个名字，必须是HFSS材料库里的名字)；
+Transparency：显示的透明度；Flag：值为1时Start, Size只支持纯数字向量，值为2时value支持元胞数组表达式
+实例：
+hfssBox(fid, 'Sub1', [0,0,0], [1,2,3], 'mm',"(132 132 193)", "FR4_epoxy", 0, 1);
+hfssBox(fid, 'Sub1', {'0mm', '0mm', '0mm'}, {'Box_W', 'Box_L', 'Box_H'}, 'mm',...
+    "(132 132 193)", "FR4_epoxy", 0, 2);
+
+2. hfssCylinder(fid, CylinderName, Axis, Center, Radius, Height, Unit, Color, Material, Transparency, Flag)
+CylinderName：圆柱的名字；Axis：圆柱建模的中心轴向('X','Y'或'Z'，大小写均可)；Center：圆柱底面的圆心坐标；
+Radius：圆柱底面的圆半径；Height：圆柱的高度；Unit：单位
+Color：圆柱的颜色(RGB)；Material：材料名字（不要随便自己整个名字，必须是HFSS材料库里的名字)；
+Transparency：显示的透明度；Flag：值为1时Center, Radius, Height只支持数字，值为2时则支持元胞数组表达式
+实例：
+hfssCylinder(fid, 'Cy1', 'Z', [0,0,0], 0.5,2, 'mm',...
+   "(132 132 193)", "FR4_epoxy", 0, 1);
+hfssCylinder(fid, 'Cy1', 'Z', {'Cy_dx', 'Cy_dy', 'Cy_dz'}, 'Cy_R','Cy_H', 'mm',...
+   "(132 132 193)", "FR4_epoxy", 0, 2);
+
+3. hfssRectangle(fid,RectangleName,Axis,Start,Width,Length,Units,Color, Transparency,Flag)
+RectangleName：矩形片的名字；Axis：矩形片的法向轴向('X','Y'或'Z'，大小写均可)；
+Start：矩形片的起始基点；Width：矩形片的宽；Length：矩形片的长；
+Units：单位；Color：矩形片的颜色(RGB)；Transparency：显示的透明度；
+Flag：值为1时Start, Width, Length只支持数字，值为2时则支持元胞数组表达式
+实例：
+hfssRectangle(fid, 'Rec1', 'Z', {'Rec_dx', 'Rec_dy', 'Rec_dz'}, 'Rec_W','Rec_L', 'mm',...
+   "(132 132 193)", 0, 2);
+hfssRectangle(fid, 'Rec1', 'Z', [0,0,0], 1, 2, 'mm',...
+   "(132 132 193)", 0, 1);
+
+4. hfssCircle(fid, CircleName, Axis, Center, Radius, Unit, Color, Transparency,Flag)
+CircleName：圆形片的名字；Axis：圆形片的法向轴向('X','Y'或'Z'，大小写均可)； 
+Center：圆形片的圆心坐标；Radius：圆形片的半径；Unit：单位
+Color：圆形片的颜色(RGB)；Transparency：显示的透明度；
+Flag：值为1时Center, Radius只支持数字，值为2时则支持元胞数组表达式
+实例：
+hfssCircle(fid, 'Cir1', 'Z',[0,0,0], 1, 'mm',...
+    "(128 128 128)", 0, 1);
+hfssCircle(fid, 'Cir1', 'Z',{'Cir_dx', 'Cir_dy', 'Cir_dz'}, 'Cir_R', 'mm',...
+    "(128 128 128)", 0, 2);
+
+5. hfssSetColor(fid, ObjectName, Color)
+ObjectName：需要修改颜色的物体对应的名字.
+Color：RGB三色值.
+实例：
+hfssSetColor(fid, 'Box1', [255, 0, 0]);
+
+6.hfssSetTransparency(fid, ObjectName, Value)
+ObjectName：需要修改颜色的物体对应的名字.
+Value：透明度值，在0到1之间；0代表完全不透明，1代表完全透明.
+实例：
+hfssSetTransparency(fid,'Box1', 0);
+
+7. hfssUnite(fid, ObjectList)
+ObjectList：待Unite的物体名字
+实例：
+hfssUnite(fid, {'Object1Name', 'Object2Name', 'Object3Name'});
+
+8. hfssSubtract(fid, BigParts, SmallParts, KeepOriginals)
+BigParts：待减物品名字；SmallParts：被减的物体名字
+KeepOriginals：为'false'时不保留被减物，为'true'时保留被减物
+实例：
+hfssSubtract(fid, {'Object1Name'}, {'Subject1Name'}, 'false');
+hfssSubtract(fid, {'Object1Name', 'Object2Name'}, …
+		   {'Subject1Name'}, 'true');
+
+9. hfssRename(fid, OldName, NewName)
+OldName：初始名；NewName：修改名
+实例：
+hfssRename(fid, 'Dipole1', 'Dipole2');
+
+10. hfssMove(fid, Objects, MoveVector, Unit, Flag)
+Objects：需要操作的物体名 ；MoveVector：移动矢量；Unit：单位
+Flag：值为1时MoveVector只支持纯数字向量，值为2时支持元胞数组表达式
+实例：
+hfssMove(fid, {'Box1'}, [0,0,2],'mm',1);
+hfssMove(fid,{'Box1','Box2','Box3'}, {'0mm','move_dy','move_dz'},'mm',2);
+
+11. hfssRotate(fid, Objects, Axis, RotAngle, Unit, Flag)
+Objects：需要操作的物体名 ；Axis：旋转轴，例如'X','Y','Z' 
+RotAngle：绕旋转轴旋转角度；Unit：单位，角度单位采用'deg'
+Flag：值为1时RotAngle只支持纯数字向量，值为2时支持元胞数组表达式
+实例：
+hfssRotate(fid, {'Cy1'}, 'Z',90,'deg',1);
+hfssRotate(fid,{'Cy1','Cy2','Cy3'},'Z','rotate_ang','deg',2);
+
+12. hfssMirror(fid, Objects, MirrorBase, MirrorNormal, Unit, Flag)
+Objects：需要操作的物体名 ；MirrorBase：參考基点
+MirrorNormal：镜像面的法向量；Unit：单位
+Flag：值为1时MirrorBase，MirrorNormal只支持纯数字向量，
+值为2时支持元胞数组表达式
+实例：
+hfssMirror(fid, {'Box1'}, [0,0,0],[0,1,0],'mm',1);
+hfssMirror(fid,{'Box1','Box2','Box3'}, {'0mm','0mm','0mm'},...
+{'0mm','Mirror_y','0mm'},'mm',2);
+
+13. hfssDuplicateAlongLine(fid, Objects, AlongVector, nClones, dupBoundaries,...
+    CreateOrUnite, Units, Flag)
+Objects：需要操作的物体名 ；AlongVector：移动矢量； Unit：单位；
+nClones：复制数(包括本体在内)；dupBoundaries：是否复制边界条件，为'true'则复制，'flase'则不复制
+CreateOrUnite：为'true'则创建新物体且不进行布尔和操作，为'false'则不创建新物体并进行布尔和操作；
+Flag：值为1时AlongVector只支持纯数字向量且nClones只支持输入数字，
+值为2时AlongVector支持元胞数组表达式且nClones支持输入字符
+实例：
+hfssDuplicateAlongLine(fid, {'Cy1'}, [0,0,7], 10, 'false', 'true', 'mm', 1);
+hfssDuplicateAlongLine(fid, {'Cy2'}, {'0mm','5mm','0mm'},'number', 'true', 'false', 'mm', 2);
+
+14. hfssDuplicateAroundAxis(fid, Objects, Axis, DupAngle,nClones,Unit,...
+    dupBoundaries,CreateOrUnite,Flag)
+Objects：需要操作的物体名 ；Axis：旋转轴，例如'X','Y','Z' ； 
+Unit：单位；DupAngle：绕旋转轴旋转角度
+nClones：复制数(包括本体在内)；dupBoundaries：是否复制边界条件，为'true'则复制，'flase'则不复制
+CreateOrUnite：为'true'则创建新物体且不进行布尔和操作，为'false'则不创建新物体并进行布尔和操作；
+Flag：值为1时DupAngle和nClones只支持输入数字，值为2时支持输入字符
+实例：
+hfssDuplicateAroundAxis(fid, {'Cy1'}, 'Z', 20, 6,'deg','true','true',1);
+hfssDuplicateAroundAxis(fid, {'Cy2','Cy3'}, 'Z', 'DupAngle','number','deg','true','false',2);
+
+15. hfssDuplicateMirror(fid, Objects, MirrorBase, MirrorNormal, dupBoundaries, Unit, Flag)
+Objects：需要操作的物体名 ；MirrorBase：参考基点
+MirrorNormal：镜像面的法向量； Unit：单位；
+dupBoundaries：是否复制边界条件，为'true'则复制，'flase'则不复制
+Flag：值为1时MirrorBase和MirrorNormal只支持纯数字向量，值为2时支持元胞数组表达式
+实例：
+hfssDuplicateMirror(fid, {'Cy1'}, [0,0,0], [0,0,1], 'false', 'true', 1);
+hfssDuplicateMirror(fid, {'Cy2','Cy3'}, {'0mm','0mm','0mm'},...
+{'0mm','5mm','0mm'},'true','mm', 2);
+
+16. hfssLine(fid, LineName, Points, Unit,Flag)
+LineName：line的名字；Unit：单位
+Points： 一个2行3列的矩阵，例如[x1,y1,z1;x2,y2,z2]
+实例：
+hfssLine(fid, 'line1',[1,0,0;1,1,0],'mm',1)
+hfssLine(fid, 'line2',{'0mm','0mm','0mm';'0mm','0mm','dz'},'mm',2)
+
+17. hfssArcforCenterpoint(fid, ArcName, ArcPlane, Center, Start,Angle,Unit,Flag)
+ArcName：弧形的名字； ArcPlane：弧形所在的平面，例如'XY','YZ','ZX'
+Center：圆心坐标；Start：起始点坐标
+Angle：顺时针绕过的角度(默认为deg)；Unit：单位
+Flag：值为1时Center, Start只支持纯数字向量，值为2时则支持元胞数组表达式
+实例：
+hfssArcforCenterpoint(fid,'arc1', 'YZ',[0 0 0], [0 1 0],90,'mm',1);
+hfssArcforCenterpoint(fid,'arc1','XY',{'0mm','0mm','0mm'},…
+{'1mm','0mm','0mm'},'Angle1','mm',2);
+
+18. hfssCoverLines(fid, Name)
+Name：物体名
+实例：
+hfssCoverLines(fid, 'Polyline1');
+
+19. hfssPolyline(fid, PolylineName, Points, Units,Flag)
+PolylineName：多线段的名字；Units：单位
+Points： 一个N行3列的矩阵，N为点的个数。例如[x1,y1,z1;x2,y2,z2;...xn,yn,zn]
+Flag：值为1时Points只支持纯数字矩阵，值为2时Points支持元胞矩阵表达式
+实例：
+hfssPolyline(fid, 'Polyline1',[0 0 0;0 1 0;1 1 0;1 0 0;0 0 0], 'mm',1);
+hfssPolyline(fid, 'Polyline1',{'0mm','0mm','0mm';'x1','0mm','0mm';...
+'0mm,'y1','0mm';'0mm','0mm','0mm'}, 'mm',2);
+
+20. hfssCreateEquationCurve(fid,CurveName,XtFunction,YtFunction,ZtFunction,tStart,tEnd)
+CurveName：曲线的名字；
+XtFunction：X轴含参表达式；YtFunction：Y轴含参表达式；
+ZtFunction：Z轴含参表达式；tStart：自变量始点；tEnd：自变量终点
+实例：
+hfssCreateEquationCurve(fid,'f1','0mm','_t*1mm','sin(_t)*1mm','0','10');
+
+21. hfssConnect(fid, ObjName1,ObjName2)
+ObjName1,ObjName2：分别为需要connect两个物体的名字
+实例：
+hfssConnect(fid, 'Rec1','Rec2');
+
+22. hfssSpline(fid, SplineName, Points, Unit,Flag)
+SplineName：Spline的名字；Unit：单位
+Points： 一个3行3列的矩阵，例如[x1,y1,z1;x2,y2,z2;x3,y3,z3]
+或者{'x1','y1','z1';'x2','y2','z2';'x3','y3','z3'}
+Flag：值为1时Points只支持纯数字矩阵，值为2时则支持元胞矩阵表达式
+实例：
+hfssSpline(fid, 'Spline1', [x1,y1,z1;x2,y2,z2;x3,y3,z3], 'mm',1);
+hfssSpline(fid, 'Spline2', {'0mm','0mm','0mm';'0mm','0.5mm','1mm';'0mm','1mm','1.5mm'}, 'mm',2);
+
+23.  hfssEllipse(fid, EllipseName, Axis, Center, MajRadius, Ratio, Unit, Flag)
+EllipseName：椭圆的名字；Axis：垂直于椭圆所在平面的轴向
+Center：椭圆中心点坐标；MajRadius：主半径（轮换式制赋值，如果Axis为'Z'则该值赋给X轴半径，
+如果Axis为'X'则该值赋给Y轴半径，如果Axis为'Y'则该值赋给Z轴半径）
+Ratio：椭圆另一半径与MajRadius的比值；Unit:单位
+Flag：Flag值为1时Center, MajRadius, Ratio只支持纯数字输入，Flag值为2时则支持字符
+实例：
+hfssEllipse(fid, 'Ellipse1','Z',[0 0 0], 2, 3,'mm',"(132 132 193)", 0, 1);
+hfssEllipse(fid, 'Ellipse2','Z',{'0mm','0mm','0mm'}, 'R1', 'Ratio1','mm', "(132 132 193)", 0,2);
+
+24. hfssSphere(fid, Name, Center, Radius, Unit,Color, Material, Transparency,Flag)
+Name：圆球的名字；Center：圆球的中心坐标
+Radius：圆球的半径；Unit：单位；Color：Box的颜色(RGB)
+Material：材料名字（不要随便自己整个名字，必须是HFSS材料库里的名字)；
+Transparency：显示的透明度；
+Flag：值为1时Center, Radius只支持纯数字向量，值为2时则支持元胞数组表达式
+实例：    
+hfssSphere(fid, 'Sphere2', [0 0 0], 2, 'mm',"(255 128 0)",'vacuum',0,1);
+hfssSphere(fid, 'Sphere2', {'1mm','2mm','3mm'}, '2mm', 'mm',"(255 128 0)",'vacuum',0,2);
+
+25. hfssHollowCylinder(fid, Name, Axis, Center, inRadius, outRadius, ...
+Height, Unit, Color, Material, Transparency, Flag)
+Name：物体名；Axis：圆柱建模的中心轴向('X','Y'或'Z'，大小写均可)；Center：底面的圆心坐标
+inRadius：圆环底面的内半径；outRadius：圆环底面的外半径；Height：高度；Units：单位
+Color：圆柱的颜色(RGB)；Material：材料名字（不要随便自己整个名字，必须是HFSS材料库里的名字)；
+Transparency：显示的透明度；Flag：值为1时Center, inRadius, outRadius, Height只支持数字，
+值为2时value支持元胞数组表达式
+实例：
+hfssHollowCylinder(fid,'HollowCylinder1', 'z', [0 0 0], 0.4, 0.8, ...
+    2, 'mm', "(0 128 128)", "FR4_epoxy", 0, 1);
+hfssHollowCylinder(fid,'HollowCylinder2', 'z', {'1mm','2mm','3mm'}, '0.2mm', '0.6mm', ...
+    '3mm', 'mm', "(255 128 0)", "vacuum", 0, 2);
+
+26. hfssThickenSheet(fid, SheetName,Thickness, Unit, Flag)
+SheetName：需要增厚的平面物体名；Thickness：增厚尺寸
+Unit：单位；Flag：值为1时，Thickness只支持数字，值为2时则支持字符表达式
+实例：
+hfssThickenSheet(fid, 'rec1',0.035,'mm', 1);
+hfssThickenSheet(fid, 'rec2','dH','mm', 2);
+
+27. hfssSplit(fid, ObjectName,splitplane, side)
+ObjectName：物体名，例如{'Box1'}或者{'Cylinder1','Box1','Rectangle1'}
+splitplane：分割平面，例如'XY','YZ','ZX'
+side：保留物体哪侧，例如'NegativeOnly','PositiveOnly','Both'
+实例：
+hfssSplit(fid, {'Rec1'},'ZX', 'NegativeOnly');
+hfssSplit(fid, {'Rec2'},'YZ', 'PositiveOnly');
+hfssSplit(fid, {'Rec3'},'XY', 'Both');
+
+28. hfssScale(fid, ObjectName,Scale_array, Flag)
+ObjectName：需要放缩的物体名；
+Scale_array：放缩倍率，格式为[ScaleX,ScaleY,ScaleZ]或{'ScaleX','ScaleY','ScaleZ'}
+Flag：值为1时，Scale_array只支持纯数字向量，值为2时则支持元胞数组表达式
+实例：
+hfssScale(fid, 'Box1',[1,2,3], 1);
+hfssScale(fid, 'Sphere1',{'scaleX','scaleY','scaleZ'}, 2);
+
+29. hfssIntersect(fid, ObjName1,ObjName2,KeepOriginals)
+ObjName1,ObjName2：分别为需要Intersect两个物体的名字
+KeepOriginals：为'false'时不保留进行Intersect操作的ObjName2，为'true'时则予以保留
+hfssIntersect(fid, 'Box1','Sphere1','false');
+hfssIntersect(fid, 'Box2','Sphere2','true');
+
+30. hfssSweepAroundAxis(fid, ObjectName, Axis, SweepAngle,Unit,Flag)
+ObjectName：物体名；Axis：旋转轴，例如'X','Y','Z'
+SweepAngle：扫过的角度；Unit：单位
+Flag：值为1时SweepAngle只支持数字，值为2时则支持字符表达式
+实例：
+hfssSweepAroundAxis(fid, 'Line1', 'Z', 180,'deg',1);
+hfssSweepAroundAxis(fid, 'Line2', 'Z', '360deg','deg',2);
+
+31. hfssSweepAlongVector(fid, ObjectName, SweepVector, Unit,Flag)
+ObjectName：物体名；SweepVector：Sweep指定的矢量；Unit：单位
+Flag：值为1时SweepVector只支持纯数字向量，值为2时则支持元胞数组表达式
+hfssSweepAlongVector(fid, 'Line1', [-1,0,0] ,'mm',1);
+hfssSweepAlongVector(fid, 'Line2', {'1mm','1mm','0mm'} ,'mm',2);
+
+32. hfssSweepAlongPath(fid, Object,Path,TwistAngle,Unit,Flag)
+Object：物体名；Path：路径名；TwistAngle：扭曲角度；Unit：单位
+Flag：值为1时TwistAngle只支持纯数字，值为2时则支持字符表达式
+实例：
+hfssSweepAlongPath(fid, 'Line1','Ellipse1',0,'deg',1);
+hfssSweepAlongPath(fid, 'Line2','Arc1','180deg','deg',2);
+
+33. hfssAddMaterial(fid, MaterialName, Er, Ur, Dielectric_loss,Magnetic_loss,Conductivity)
+MaterialName：材料名；Er：相对介电常数；Ur：相对磁导率
+Dielectric_loss：介质损耗正切角；Magnetic_loss：磁损耗正切角
+Conductivity：电导率，缺省默认为0，即理想介质
+实例：
+hfssAddMaterial(fid, 'Material1', 4.4, 1, 0.02, 0);
+hfssAddMaterial(fid, 'copper', 1, 0.999991, 0, 0, 58000000);
+
+34. hfssAssignMaterial(fid, ObjectName, MaterialName)
+ObjectName：需要重设材料的物体名字；
+MaterialName：材料名字
+实例：
+hfssAssignMaterial(fid, 'SMA_inner', 'copper');
+
+35. hfssSetSolveInside(fid, ObjectName, Flag)
+ObjectName：需要重设内部区域求解与否的物体名字；
+Flag：值为'true'时则物体内部区域需要求解，值为'false'时则不需要求解
+实例：
+hfssSetSolveInside(fid, 'Box1', 'true');
+
+36. hfssSetModel(fid, ObjectName, Flag)
+ObjectName：需要重设物体是否需要进行模型求解；
+Flag：值为'true'时则物体需要进行模型求解，值为'false'时则物体不需要进行模型求解
+实例：
+hfssSetModel(fid, 'Box1', 'false');
+
+
+边界条件和激励函数：
+1. hfssAssignPerfectE(fid, PerfectE_Name, Objects, infGND)
+PerfectE_Name：设定理想导体边界条件(Perfect E Boundaries)的名字
+Objects：物体名字；infGND：为'true'时设定的PEC为无限大地平面，默认为'false'
+实例：
+hfssAssignPerfectE(fid, 'PerfE1',{'Patch','GND'}, 'false')
+
+2. hfssAssignPerfectH(fid, PerfectH_Name, Objects)
+PerfectH_Name：设定理想磁边界条件(Perfect H Boundaries)的名字
+Objects：物体名字；
+实例：
+hfssAssignPerfectH(fid, 'PerfH1',{'rect1','rect2'});
+
+3. hfssCreateRegion(fid, RegionName,OffsetArray,Unit,Flag)
+RegionName：物体名；OffsetArray：3行2列的矩阵，例如[x1,x2;y1,y2;z1,z2]，{'x1','x2';'y1','y2';'z1','z2'}
+Unit：单位；Flag：值为1时OffsetArray只支持纯数字矩阵，值为2时则支持元胞数组表达式
+实例：
+hfssCreateRegion(fid, 'Region1',[2,2;3,3;4,4],'mm',1);
+hfssCreateRegion(fid,'Region2',{'2mm','2mm';'4mm','4mm';'8mm','8mm'},'mm',2);
+
+4. hfssAssignRadiation(fid, RadiationName, ObjectName)
+RadiationName：设定辐射边界条件(Radiation Boundary Condition)的名字
+ObjectName：物体名字
+实例：
+hfssAssignRadiation(fid, 'Radiation1','AirBox1');
+
+5. hfssAssignFiniteCond(fid,ConditionName,ObjectName,Conductivity,Permeability,InfGround,Flag)
+ConditionName：有限导电率边界条件名；ObjectName：物体名
+Conductivity：单位；Permeability：相对磁导率；
+InfGround：值为'true'时表示无限大尺寸，默认推荐用'false'
+Flag：值为1时Conductivity,Permeability只支持纯数字，值为2时则支持字符表达式
+实例：
+hfssAssignFiniteCond(fid,'FiniteCond1','Rec1',580000,1,'true',1);
+hfssAssignFiniteCond(fid,'FiniteCond2','Rec2', 'Cond','Ur','false',2);
+
+6. hfssAssignImpedance(fid,ConditionName,ObjectName,Resistance,Reactance,InfGround,Flag)
+ConditionName：阻抗边界条件名；ObjectName：物体名
+Resistance：电阻(单位默认为ohm/□，无需带单位）；Reactance：电抗(单位为ohm/□，无需带单位）
+InfGround：值为'true'时表示无限大尺寸，默认推荐用'false'
+Flag：值为1时Resistance,Reactance只支持纯数字，值为2时则支持字符表达式
+实例：
+hfssVariableInsert(fid,Design_name,'Resistance1', 100, '',1);
+hfssVariableInsert(fid,Design_name,'Reactance1', -50, '',1);
+hfssAssignImpedance(fid,'Impedance1','Rec1',50,50,'false',1);
+hfssAssignImpedance(fid,'Impedance2','Rec2','Resistance1','Reactance1','false',2);
+
+7. hfssAssignAnisotropicImpedance(fid,ConditionName,ObjectName,ResistanceArray,ReactanceArray,InfGround,Flag)
+ConditionName：阻抗边界条件名；ObjectName：物体名
+ResistanceArray：电阻(单位默认为ohm/□，无需自带输入），格式为[Zxx,Zxy,Zyx,Zyy]或{'Zxx','Zxy','Zyx','Zyy']
+ReactanceArray：电抗(单位为ohm/□，无需自带输入），格式为[Zxx,Zxy,Zyx,Zyy]或{'Zxx','Zxy','Zyx','Zyy']
+InfGround：值为'true'时表示无限大尺寸，默认推荐用'false'
+Flag：值为1时Resistance,Reactance只支持纯数字，值为2时则支持字符表达式
+实例：
+hfssVariableInsert(fid,Design_name,'Z_re_xx', 377, '',1);
+hfssVariableInsert(fid,Design_name,'Z_re_xy', 50, '',1);
+hfssVariableInsert(fid,Design_name,'Z_re_yx', 100, '',1);
+hfssVariableInsert(fid,Design_name,'Z_re_yy', 300, '',1);
+hfssVariableInsert(fid,Design_name,'Z_im_xx', 0, '',1);
+hfssVariableInsert(fid,Design_name,'Z_im_xy', -100, '',1);
+hfssVariableInsert(fid,Design_name,'Z_im_yx', 50, '',1);
+hfssVariableInsert(fid,Design_name,'Z_im_yy', 0, '',1);
+hfssAssignAnisotropicImpedance(fid,'Impedance1','Rec1',[377,50,100,300],[0,-100,50,0],'false',1);
+hfssAssignAnisotropicImpedance(fid,'Impedance2','Rec2',{'Z_re_xx','Z_re_xy','Z_re_yx','Z_re_yy'},...
+{'Z_im_xx','Z_im_xy','Z_im_yx','Z_im_yy'},'false',2);
+
+8. hfssAssignLumpedRLC(fid, LumpedRLC_Name, ObjName, Z_Array,Empty_or_not, iLStart, iLEnd, Unit,Flag)
+LumpedRLC_Name：集总RLC边界条件的名字
+ObjName：需要设置集总RLC边界条件的物体(Sheet类)名字
+Z_Array：集总RLC的值，依次放置电阻，电感和电容；
+用法示例如：[10,2,3]或者{'Resistance1','Inductance1','Capacitance1'}
+第一种用法全数字下，默认单位为电阻-ohm，电感-nH,电容-pf
+Empty_or_not：输入格式为一个纯数字向量[0 1 0]，按顺序代表电阻、电感、电容的有无(0代表无，1代表有)
+CurrentLine：电流线起终坐标点，仅支持纯数字矩阵进行传参，调用格式为：[x1,y1,z1;x2,y2,z2]
+Units：电流线起终点坐标对应的单位
+Flag：值为1时，Z_Array仅支持输入全数字向量；值为2时，Z_Array支持输入元胞数组表达式
+例子：
+hfssAssignLumpedRLC(fid, 'LumpedRLC1', 'Rec1', [0,2,0],[0,1,0], [-0.5,0,0;0.5,0,0], 'mm',1);
+hfssAssignLumpedRLC(fid, 'LumpedRLC2', 'Rec2', {'1ohm','2nH','0pF'},[1,1,0], [-1,4.5,0;1,4.5,0], 'mm',2);
+
+
+9. hfssAssignMaster(fid, MasterName, FaceName, UVector,Unit,ReverseV)
+MasterName：主边界条件的名字
+FaceName：需要设置主边界条件的物体(Sheet类)名字
+UVector：仅支持纯数字矩阵进行传参，调用格式为：[x1,y1,z1;x2,y2,z2]
+Unit：积分线的起终点坐标对应的单位
+ReverseV：坐标是否翻转，'true'代表翻转，'false'代表不翻转，默认为'false'
+例子：
+hfssAssignMaster(fid, 'Master1', 'Rec1', [20,20,20;25,20,20],'mm','false');
+
+10. hfssAssignSlave(fid, SlaveName, FaceName, UVector, Unit,ReverseV,MasterName,Scan_array)
+SlaveName：从边界条件的名字
+FaceName：需要设置从边界条件的物体(Sheet类)名字
+UVector：仅支持纯数字矩阵进行传参，调用格式为：[x1,y1,z1;x2,y2,z2]
+Unit：积分线的起终点坐标对应的单位
+ReverseV：坐标是否翻转，'true'代表翻转，'false'代表不翻转，默认为'false'
+MasterName：从边界条件依附的主边界条件名字
+Scan_array：方位面和俯仰面扫描角度(单位为deg)，格式为{'Scan_phi','Scan_theta'}
+元胞数组第一位和第二位分别代表方位面和俯仰面扫描角度
+例子：
+hfssAssignSlave(fid, 'Slave1', 'Rec2',[20,20,25;25,20,25],'mm', 'false','Master1',{'90deg','0deg'})
+hfssAssignSlave(fid, 'Slave1', 'Rec2',[20,20,25;25,20,25],'mm', 'false','Master1',{'Scan_phi','Scan_theta'})
+
+11. hfssAssignFloquetPort(fid, PortName, FaceName, DeembedDist, VectorA,VectorB,Scan_array,Unit)
+PortName：端口名；FaceName：需要设置端口的物体名
+DeembedDist：端口所在参考面偏移距离，支持三种模式：'false'表示不做端口偏移处理，
+纯数字和字符型传参输入则进行端口偏移处理
+VectorA，VectorB：周期性结构单元的排列方向，仅支持纯数字矩阵进行传参，调用格式为：
+[x1,y1,z1;x2,y2,z2]，坐标点需要在需要设置端口的物体上
+Scan_array：方位面和俯仰面扫描角度(单位为deg)，格式为{'Scan_phi','Scan_theta'}
+Unit：单位
+实例：
+hfssAssignFloquetPort(fid, 'FloquetPort1', 'FloquetPort_rec', 'false', ...
+    [4,-6,30;-4,-6,30],[4,-6,30;4,6,30],{'90deg','0deg'},'mm');
+hfssAssignFloquetPort(fid, 'FloquetPort1', 'FloquetPort_rec', 10, ...
+    [4,-6,30;-4,-6,30],[4,-6,30;4,6,30],{'90deg','0deg'},'mm');
+hfssAssignFloquetPort(fid, 'FloquetPort1', 'FloquetPort_rec', 'Deembed_H', ...
+    [4,-6,30;-4,-6,30],[4,-6,30;4,6,30],{'scan_phi','scan_theta'},'mm');
+
+12. hfssAssignLumpedPort(fid, LumpedPortName, SheetName, iLine Resistance,Reactance,RenormImp)
+LumpedPortName：集总端口名；SheetName：物体名；
+iLine：集总端口积分线起终坐标点，仅支持纯数字矩阵进行传参，调用格式为：[x1,y1,z1;x2,y2,z2]
+Unit：单位；Resistance：端口电阻值；Reactance：端口电抗值
+RenormImp：端口归一化参考值，如为空则不归一化，不为空则按输入阻抗进行归一化
+实例：
+hfssAssignLumpedPort(fid, 'Port1','Rec1', [-0.5,0,0;0.5,0,0],'mm',50,0,[]);
+hfssAssignLumpedPort(fid, 'Port2','Rec2', [-0.5,0,5;0.5,0,5],'mm',50,-50,100);
+
+13. hfssAssignEasyWavePort(fid, PortName, FaceName,NumModes,DeembedDist,Unit)
+PortName：端口名；FaceName：需要设置端口的物体名；NumModes：模式数；
+DeembedDist：端口所在参考面偏移距离，支持三种模式：'false'表示不做端口偏移处理
+纯数字和字符型传参输入则进行端口偏移处理
+Unit：单位
+实例：
+hfssAssignEasyWavePort(fid, 'WavePort1', 'FSS_patch',3,'false','mm');
+hfssAssignEasyWavePort(fid, 'WavePort1', 'FSS_patch',3, 3,'mm');
+hfssAssignEasyWavePort(fid, 'WavePort1', 'FSS_patch',3,'Deembed_H','mm');
+
+14. hfssAssignFullWavePort(fid, PortName, FaceName, NumModes, iLineStart, iLineEnd,DeembedDist,Unit)
+PortName：端口名；FaceName：需要设置端口的物体名；NumModes：模式数
+iLineStart：积分线起点，仅支持纯数字矩阵进行传参，矩阵维度为NumModes*3,调用格式为：[x1,y1,z1;x2,y2,z2]
+iLineEnd：积分线终点，仅支持纯数字矩阵进行传参，矩阵维度为NumModes*3,调用格式为：[x1,y1,z1;x2,y2,z2]
+DeembedDist：端口所在参考面偏移距离，支持三种模式：'false'表示不做端口偏移处理
+Unit：单位    
+实例：
+hfssAssignFullWavePort(fid, 'FullWavePort1', 'patch6', 2,[2,8,2;3,6,2], [4,8,2;3,10,2],'false','mm')
+hfssAssignFullWavePort(fid, 'FullWavePort1', 'patch6', 2,[2,8,2;3,6,2], [4,8,2;3,10,2],3,'mm')
+hfssAssignFullWavePort(fid, 'FullWavePort1', 'patch6', 2,[2,8,2;3,6,2], [4,8,2;3,10,2],'Deembed_H','mm')
+
+15. hfssEditSources(fid, PortNameList, ModesNumArray,MagArray, PhaseArray)
+PortNameList：端口名（元胞数组）；ModesNumArray：每个端口对应的模式数；
+MagArray：激励幅度，默认单位为'W'；PhaseArray：激励相位，默认单位为'deg'
+实例：
+hfssEditSources(fid, {'WavePort1','WavePort2','WavePort3','LumpedPort1','LumpedPort2','FullWavePort1'},...
+    [3,3,3,1,1,2],[1,2,3,4,5,6,7,8,9,10,11,12,13], [10,20,30,40,50,60,70,80,90,100,110,120,130]);
+
+
+数据后处理函数：
+1. hfssSolutionSetup(fid, SetupName,Frequency,Unit,MaximumPasses,MaxDeltaS)
+SetupName：求解设置名；Frequency：求解频率；Unit：求解频率单位
+MaximumPasses：最大迭代次数 ；MaxDeltaS：最大收敛门槛
+实例：
+hfssSolutionSetup(fid, 'Setup1',5,'GHz',20,0.02);
+
+2. hfssInsertFrequencySweep(fid,SetupName,SweepName,SweepType,SaveFields,Fre_array,Unit)
+SetupName：求解设置名；SweepName：频率扫描配置名；Unit：频率单位
+SweepType：频率扫描类型，支持以下三种：'Fast'，'Interpolating'，'Discrete'
+SaveFields：是否保存场结果，'true'表示保留，'false'则不保留
+Fre_array：纯数字向量，调用格式为[StartValue,StepSize,StopValue],例如频率单位为GHz时：
+[1,0.01,2]表示扫频范围为1GHz到2GHz，频率间隔0.01GHz
+实例：
+hfssInsertFrequencySweep(fid,'SetupName','sweep1','Fast','true',[4,0.01,6],'GHz');
+hfssInsertFrequencySweep(fid,'SetupName','sweep2','Interpolating','false',[4,0.01,6],'GHz');
+hfssInsertFrequencySweep(fid,'SetupName','sweep3','Discrete','true',[4,0.01,6],'GHz');
+
+3. hfssAnalyzeSetup(fid,SetupName)
+SetupName：求解设置名；如为[]则执行Analyze All操作
+实例：
+hfssAnalyzeSetup(fid,'Setup1');
+hfssAnalyzeSetup(fid,[]);
+
+4. hfssInsertFarFieldSphereSetup(fid, FarFieldSetupName,Theta_array, Phi_array)
+FarFieldSetupName：远场配置名；
+Theta_array：俯仰角，调用格式为[ThetaStart,ThetaStep,ThetaStop]
+Phi_array：方位角，调用格式为[PhiStart,PhiStep,PhiStop]
+实例：
+hfssInsertFarFieldSphereSetup(fid, 'FarField1',[-180,1,180], [0,1,360]);
+
+5. hfssCreateModalSolutionDataForOnePort(fid,Report_name,SetupName,SweepName,Operation,ReportType,PortName,Mode)
+Report_name：Report名；SetupName：求解设置名；SweepName：频率扫描配置名
+Operation：运算符号，例如'dB','ang_deg','mag','re','im'等
+ReportType：报告类型，例如'VSWR'，'Zo','Gamma'等
+PortName：端口名字，调用格式为'WavePort1'
+Mode：端口的模式，调用格式为纯数字
+实例：
+hfssCreateModalSolutionDataForOnePort(fid,'report_VSWR','Setup1','Sweep1','mag','VSWR','WavePort1',1);
+
+6. hfssCreateModalSolutionDataForTwoPort(fid,Report_name,SetupName,SweepName,Operation,ReportType,PortNameList,ModeList)
+Report_name：Report名；SetupName：求解设置名；SweepName：频率扫描配置名
+Operation：运算符号，例如'dB','ang_deg','mag','re','im'等
+ReportType：报告类型，例如'S','Y','Z','GroupDelay'等
+PortNameList：两个端口的名字，调用格式为{'WavePort1','WavePort2'}
+ModeList：每个端口的模式，调用格式为[1,2]
+实例：
+hfssCreateModalSolutionDataForTwoPort(fid,'S(WavePort1:3,FullWavePort1:1)','Setup1','Sweep1','dB','S',{'WavePort1','WavePort1'},[1,1]);
+hfssCreateModalSolutionDataForTwoPort(fid,'GroupDelay(WavePort1:3,FullWavePort1:1)','Setup1','Sweep1','','GroupDelay',{'WavePort1','FullWavePort1'},[3,1]);
+
+7. hfssCreate2DFarFieldReport(fid,Report_name,SetupName,SweepName,FarFieldSetupName,…
+Operation,ReportType,PrimarySweep,input_array1,input_array2,input_array3,Fre_Unit)
+Report_name：Report名；SetupName：求解设置名；SweepName：频率扫描配置名
+FarFieldSetupName：远场配置名；Operation：运算符号，例如'dB','ang_deg','mag','re','im'等
+ReportType：报告类型，例如'GainTotal'，'RealizedGainTotal'等
+PrimarySweep：扫描参数，绘图中的X坐标参量，例如'Theta','Phi','Freq'等
+input_array1：'Theta'的范围，调用格式为纯数字向量，或者为'All'
+input_array2：'Phi'的范围，调用格式为纯数字向量，或者为'All'
+input_array3：'Freq'的范围，调用格式为纯数字向量，或者为'All'
+Fre_Unit：频率单位，如'GHz','MHz'等
+实例：
+hfssCreate2DFarFieldReport(fid,'Gain1','Setup1','Sweep1','FarField1','dB','GainTotal','Theta',...
+    'All',0,6,'GHz');
+hfssCreate2DFarFieldReport(fid,'Gain2','Setup1','Sweep1','FarField1','dB','GainTotal','Phi',...
+    [0,90],'All',6,'GHz');
+hfssCreate2DFarFieldReport(fid,'Gain3','Setup1','Sweep1','FarField1','dB','GainTotal','Freq',...
+    0,0,'All','GHz');
+
+8. hfssCreate3DFarFieldReport(fid,Report_name,SetupName,SweepName,FarFieldSetupName,…
+Operation,ReportType,Theta_array,Phi_array,Frequency,Fre_Unit)
+Report_name：Report名；SetupName：求解设置名；SweepName：频率扫描配置名
+FarFieldSetupName：远场配置名；Operation：运算符号，例如'dB','ang_deg','mag','re','im'等
+ReportType：报告类型，例如'GainTotal'，'RealizedGainTotal'等
+Theta_array：'Theta'的范围，调用格式为纯数字向量，或者为'All'
+Phi_array：'Phi'的范围，调用格式为纯数字向量，或者为'All'
+Frequency：频率；Fre_Unit：频率单位，如'GHz','MHz'等
+实例：
+hfssCreate3DFarFieldReport(fid,'Gain4','Setup1','Sweep1','FarField1','dB','GainTotal',…
+'All','All',6,'GHz');
+hfssCreate3DFarFieldReport(fid,'Gain5','Setup1','Sweep1','FarField1','dB','GainTotal',…
+linspace(0,90,91),linspace(0,360,361),6,'GHz');
+
+9. hfssDeleteReport(fid,SetupName)
+ReportName：需要删除的Report名；如为[]则执行Delete All操作
+实例：
+hfssDeleteReport(fid,'S11');
+hfssDeleteReport(fid,[]);
+
+10. hfssUpdateReport(fid,ReportName)
+ReportName：需要更新的Report名；如为[]则执行UpdateAllReports操作
+实例：
+hfssUpdateReport(fid,'S11');
+hfssUpdateReport(fid,[]);
+
+11. hfssExportToFile(fid, ReportName, FileName, Size)
+ReportName：需要导出数据的Report名
+FileName：数据导出路径
+Size：导出图像的长宽像素点数，缺省则默认不导出图片格式
+实例：
+hfssExportToFile(fid,'report_VSWR', 'F:\vbsScript\VSWR.csv');
+hfssExportToFile(fid,'Gain3','F:\vbsScript\Gaintotal.csv');
+hfssExportToFile(fid,'Gain3','F:\vbsScript\Gaintotal.jpg',[1920,1080]);
+
+新增函数：
+1. hfssEditMaterial(fid, MaterialName, EditArray)
+MaterialName：材料名；
+EditArray：需要修改的材料特性参数矩阵，按下列顺序排列好
+[Er,Ur,Dielectric_loss,Magnetic_loss,Conductivity]
+Er：相对介电常数；Ur：相对磁导率
+Dielectric_loss：介质损耗正切角；Magnetic_loss：磁损耗正切角
+Conductivity：电导率，理想介质电导率为0
+实例：
+hfssEditMaterial(fid, 'Material1',[4.4,1,0.02,0,58000000]);
+
